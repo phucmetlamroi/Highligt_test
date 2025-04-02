@@ -1,15 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Streamer - Highlight</title>
+  <title>Streamer Highlight Tool</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    .timer { font-size: 2em; margin-bottom: 10px; }
+    .timer { font-size: 2em; margin: 10px 0; }
+    input, select, button { margin-top: 10px; font-size: 1rem; padding: 5px; }
   </style>
 </head>
 <body>
-  <h1>Timer Streamer</h1>
+  <h1>🎬 Ghi Highlight Livestream</h1>
+
+  <label for="roomId">🎯 Chọn Room:</label>
+  <select id="roomId">
+    <option value="minhu">Minh Ú</option>
+    <option value="baraboy2k10">Baraboy2k10</option>
+    <option value="z9">Z9</option>
+  </select>
+
   <div class="timer" id="timerDisplay">00:00:00</div>
 
   <button id="startBtn">Start</button>
@@ -17,9 +26,88 @@
   <button id="stopBtn" disabled>Stop</button>
 
   <p>
-    Ghi chú (tuỳ chọn): <input id="highlightNote" placeholder="Combat cực gắt" />
+    📝 Ghi chú:
+    <select id="highlightNote">
+      <option value="">(Không chọn)</option>
+      <option value="1 vs 4">1 vs 4</option>
+      <option value="Hài hước">Hài hước</option>
+    </select>
   </p>
 
-  <script src="script.js"></script>
+  <script>
+    const timerDisplay = document.getElementById('timerDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const highlightBtn = document.getElementById('highlightBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const noteSelect = document.getElementById('highlightNote');
+    const roomIdSelect = document.getElementById('roomId');
+
+    let startTime = null;
+    let timerInterval = null;
+    let elapsed = 0;
+
+    const formatTime = ms => {
+      const sec = Math.floor(ms / 1000);
+      const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    };
+
+    const updateDisplay = () => {
+      const now = Date.now();
+      timerDisplay.textContent = formatTime(now - startTime + elapsed);
+    };
+
+    startBtn.onclick = () => {
+      startTime = Date.now();
+      timerInterval = setInterval(updateDisplay, 500);
+
+      startBtn.disabled = true;
+      highlightBtn.disabled = false;
+      stopBtn.disabled = false;
+      roomIdSelect.disabled = true; // Khóa chọn Room
+    };
+
+    highlightBtn.onclick = async () => {
+      const now = Date.now();
+      const time = formatTime(now - startTime + elapsed);
+      const note = noteSelect.options[noteSelect.selectedIndex].value;
+      const roomId = roomIdSelect.value;
+
+      await fetch('/api/highlight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ time, note, roomId })
+      });
+
+      alert(`✅ Đã lưu highlight: ${time}${note ? ` - ${note}` : ''}`);
+      noteSelect.selectedIndex = 0; // Reset chọn ghi chú
+    };
+
+    stopBtn.onclick = () => {
+      clearInterval(timerInterval);
+      elapsed += Date.now() - startTime;
+
+      startBtn.disabled = false;
+      highlightBtn.disabled = true;
+      stopBtn.disabled = true;
+      roomIdSelect.disabled = false;
+    };
+
+    roomIdSelect.addEventListener('change', () => {
+      clearInterval(timerInterval);
+      startTime = null;
+      elapsed = 0;
+      timerDisplay.textContent = "00:00:00";
+      timerInterval = null;
+
+      startBtn.disabled = false;
+      highlightBtn.disabled = true;
+      stopBtn.disabled = true;
+
+      alert(`🆕 Đã chuyển sang room mới: ${roomIdSelect.value} → đồng hồ đã reset.`);
+    });
+  </script>
 </body>
 </html>

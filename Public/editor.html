@@ -1,15 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>Editor - Highlight List</title>
+  <meta charset="UTF-8">
+  <title>Editor - Highlight theo ngày & room</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    select, button, input[type="date"] { padding: 5px; font-size: 1rem; }
+  </style>
 </head>
 <body>
-  <h1>Danh sách Highlight</h1>
+  <h1>Editor - Xem Highlight</h1>
+
+  <label for="roomId">Chọn Room:</label>
+  <select id="roomId">
+    <option value="minhu">Minh Ú</option>
+    <option value="baraboy2k10">Baraboy2k10</option>
+    <option value="z9">Z9</option>
+  </select>
+
+  <label for="highlightDate">Chọn ngày:</label>
+  <input type="date" id="highlightDate" />
+
   <button onclick="loadHighlights()">Làm mới</button>
-  <button onclick="clearHighlights()">Xoá tất cả</button>
-  <br><br>
-  <table border="1" cellpadding="8">
+  <button onclick="clearHighlights()">Xoá dữ liệu</button>
+
+  <table>
     <thead>
       <tr><th>Thời gian</th><th>Ghi chú</th></tr>
     </thead>
@@ -17,19 +34,33 @@
   </table>
 
   <script>
+    const highlightTable = document.getElementById('highlightTable');
+    const roomIdSelect = document.getElementById('roomId');
+    const highlightDateInput = document.getElementById('highlightDate');
+
+    // Tự động set ngày hôm nay
+    highlightDateInput.value = new Date().toISOString().split('T')[0];
+
     async function loadHighlights() {
-      const res = await fetch('/api/highlights');
+      const room = roomIdSelect.value;
+      const date = highlightDateInput.value;
+      const res = await fetch(`/api/highlights?room=${room}&date=${date}`);
       const data = await res.json();
-      const table = document.getElementById('highlightTable');
-      table.innerHTML = '';
+
+      highlightTable.innerHTML = '';
       data.forEach(item => {
         const row = `<tr><td>${item.time}</td><td>${item.note}</td></tr>`;
-        table.innerHTML += row;
+        highlightTable.innerHTML += row;
       });
     }
 
     async function clearHighlights() {
-      await fetch('/api/highlights', { method: 'DELETE' });
+      const room = roomIdSelect.value;
+      const date = highlightDateInput.value;
+      const confirmClear = confirm(`Xoá highlight của room "${room}" ngày ${date}?`);
+      if (!confirmClear) return;
+
+      await fetch(`/api/highlights?room=${room}&date=${date}`, { method: 'DELETE' });
       loadHighlights();
     }
 

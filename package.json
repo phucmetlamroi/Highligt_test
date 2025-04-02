@@ -9,6 +9,9 @@
   "author": "Streamer Tools",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "googleapis": "^148.0.0",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.13.1"
   }
 }
